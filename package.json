@@ -1,0 +1,16 @@
+{
+  "name": "web-qq-backend",
+  "version": "0.0.1",
+  "description": "A backend for WebQQ written in TS/JS",
+  "main": "index.js",
+  "repository": "https://github.com/Dustin-Jiang/web-qq-backend.git",
+  "author": "Dustin Jiang <dustinjiang@outlook.com>",
+  "license": "GPL-3.0",
+  "dependencies": {
+    "express": "^4.17.2",
+    "oicq": "^2.1.8"
+  },
+  "scripts": {
+    "start": "node ./src/index.js"
+  }
+}
