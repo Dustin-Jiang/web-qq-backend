@@ -7,7 +7,7 @@ const account = [2752805684]
 var accountList = {}
 
 for (i of account) {
-  var client = createClient(account)
+  var client = createClient(account, {platform: 2})
 
   client.on("system.online", () => console.log("Logged in!"))
   client.on("message", e => {
@@ -28,6 +28,7 @@ for (i of account) {
       client.on("internal.error.qrcode", (retcode, message) => {
         res.status(500).send(message)
       })
+      client.on("system.online", () => res.status(200).send())
     })
   }).login()
 
