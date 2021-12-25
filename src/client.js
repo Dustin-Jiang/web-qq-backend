@@ -3,33 +3,37 @@ const { createClient } = require("oicq")
 const express = require("express")
 const app = express()
 const fs = require("fs")
+const message = require("./message")
 
 class ClientItem {
   constructor(uid) {
     this.token = "This is a token"
+    this.uid = uid
 
-    this.client = createClient(uid)
+    this.client = createClient(uid, {platform: 2, ignore_self: false})
     this.client.on("system.online", () => console.log("Logged in!"))
-    this.client.on("message", e => {
-      console.log(e)
-      // e.reply("hello world", true) //true表示引用对方的消息
-    })
+    this.client.on("message", e => message.receive(this.uid, e))
 
-    this.client.on("system.login.qrcode", function (e) {
-      //扫码后等待请求登录
-      app.get("/login/qrcode/:id", (req, res) => {
-        const rs = fs.createReadStream(`./src/data/${req.params.id}/qrcode.png`)
-        rs.pipe(res)
-        rs.on("error", () => res.status(404).send("User Not Found"))
-      })
-      app.get("/login/scan", (req, res) => {
-        console.log("Finish Scanning")
-        client.login()
-        client.on("internal.error.qrcode", (retcode, message) => {
-          res.status(500).send(message)
-        })
-      })
-    }).login()
+    this.logging = false
+
+    this.client.on("system.login.qrcode", () => this.logging = true).login()
+  }
+  scanCode(req, res) {
+    if(this.logging == false) return;
+    const rs = fs.createReadStream(`./src/data/${req.params.id}/qrcode.png`);
+    rs.pipe(res);
+    rs.on("error", () => res.status(404).send("User Not Found"));
+  }
+  scanned(req, res) {
+    if (this.logging == false) return;
+    this.client.login();
+    this.client.on("internal.error.qrcode", (retcode, message) => {
+      res.status(500).send(message);
+    });
+    this.client.on("system.online", () => {
+      res.status(200).send()
+      this.logging = false
+    });
   }
 }
 
