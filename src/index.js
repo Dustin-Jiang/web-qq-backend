@@ -1,4 +1,3 @@
-const { createClient } = require("oicq")
 const express = require("express")
 const app = express()
 const { createClientItem } = require("./client")

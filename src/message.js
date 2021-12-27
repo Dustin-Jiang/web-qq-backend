@@ -1,39 +1,37 @@
 const fs = require("fs");
 
+/**
+ * Write message to the history file when receive a new message. 
+ * @param {Number} uid Client uid. 
+ * @param {ociq.Message} message `oicq.Message` object contains the new message. 
+ */
 function receive(uid, message) {
   d = new Date(message.time * 1000);
   date = d.getFullYear().toString() + (d.getMonth() + 1).toString() + d.getDate().toString();
-  switch (message.message_type) {
-    case "group":
-      fs.readFile(`./src/data/${uid}/group/${message.group_id}/${date}.json`, "utf8", (err, data) => {
-        if (err) {
-          createFolder(`src/data/${uid}/group/${message.group_id}`);
-          if (err.code == "ENOENT") { logs = []; } else { throw err; }
-        } else { logs = (data == "") ? [] : JSON.parse(data); }
-        //插入消息
-        logs.push(filter(message));
-        //按时间排序
-        logs.sort(function (a, b) { return a.time - b.time; })
-        //写入文件
-        fs.writeFile(`./src/data/${uid}/group/${message.group_id}/${date}.json`, JSON.stringify(logs, null, 2), { "encoding": "utf8", "flag": "w" }, (err) => {
-          if (err) throw err;
-          return;
-        });
-      });
-      break;
+  filepath = getHistoryFileUrl(uid, message.message_type, message, date)
+  fs.readFile(filepath, "utf8", (err, data) => {
+    if (err) {
+      createFolder(`src/data/${uid}/group/${message.group_id}`);
+      if (err.code == "ENOENT") { logs = []; } else { throw err; }
+    } else { logs = (data == "") ? [] : JSON.parse(data); }
+    //插入消息
+    logs.push(filter(message));
+    //按时间排序
+    logs.sort(function (a, b) { return a.time - b.time; })
+    //写入文件
+    fs.writeFile(filepath, JSON.stringify(logs, null, 2), { "encoding": "utf8", "flag": "w" }, (err) => {
+      if (err) throw err;
+      return;
+    });
+  });
+}
+
+function getHistoryFileUrl(uid, type, message, date) {
+  switch(type) {
     case "private":
-      fs.readFile(`./src/data/${uid}/private/${message.user_id}/${date}.json`, "utf8", (err, data) => {
-        if (err) {
-          createFolder(`src/data/${uid}/private/${message.user_id}`);
-          if (err.code == "ENOENT") { logs = []; } else { throw err; }
-        } else { logs = (data == "") ? [] : JSON.parse(data); }
-        logs.push(filter(message));
-        fs.writeFile(`./src/data/${uid}/private/${message.user_id}/${date}.json`, JSON.stringify(logs, null, 2), { "encoding": "utf8", "flag": "w" }, (err) => {
-          if (err) throw err;
-          return;
-        });
-      });
-      break;
+      return `./src/data/${uid}/${type}/${message.user_id}/${date}.json`
+    case "group":
+      return `./src/data/${uid}/${type}/${message.group_id}/${date}.json`
   }
 }
 
