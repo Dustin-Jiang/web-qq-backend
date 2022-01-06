@@ -1,7 +1,5 @@
 exports.ClientItem = void 0
 const { createClient } = require("oicq")
-const express = require("express")
-const app = express()
 const fs = require("fs")
 const message = require("./message")
 
@@ -20,7 +18,8 @@ class ClientItem {
     this.client.on("message", e => message.receive(this.uid, e))
 
     this.logging = false
-
+  }
+  login(){
     this.client.on("system.login.qrcode", () => this.logging = true).login()
   }
   /**
@@ -52,6 +51,9 @@ class ClientItem {
       this.logging = false
     });
   }
+  receive = message.receive
+  send = message.send
+  pull = message.pull
 }
 
 function createClientItem(uid) {

@@ -7,7 +7,7 @@ const fs = require("fs");
  */
 function receive(uid, message) {
   d = new Date(message.time * 1000);
-  date = d.getFullYear().toString() + (d.getMonth() + 1).toString() + d.getDate().toString();
+  date = getDate(d);
   filepath = getHistoryFileUrl(uid, message.message_type, message, date)
   fs.readFile(filepath, "utf8", (err, data) => {
     if (err) {
@@ -24,6 +24,14 @@ function receive(uid, message) {
       return;
     });
   });
+}
+
+function getDate(d) {
+  month = (d.getMonth() + 1).toString()
+  if (month.length == 1) month = "0" + month
+  date = d.getDate().toString();
+  if (date.length == 1) date = "0" + date
+  return d.getFullYear().toString() + month + date
 }
 
 function getHistoryFileUrl(uid, type, message, date) {
@@ -66,7 +74,15 @@ function filter(obj) {
   return obj;
 }
 
-//Read File
+/**
+ * Get a specific file. 
+ * @param {Number} uid User QQ ID.
+ * @param {"group" | "private"} type Message type.
+ * @param {String} target Chat target user needs.
+ * @param {String} file File needs.
+ * @param {Function} callback Callback
+ * @returns 
+ */
 function get(uid, type, target, file, callback) {
   if (typeof(callback) != "function") return;
   fileList = []
@@ -87,6 +103,15 @@ function get(uid, type, target, file, callback) {
   })
 }
 
+/**
+ * Pull history from Tencent.
+ * @param {oicq.client} client An object of `oicq.client`. 
+ * @param {"friend" | "group"} type 
+ * @param {String} target 
+ * @param {String} time 
+ * @param {Function} callback 
+ * @returns 
+ */
 function pull(client, type, target, time, callback) {
   if (typeof(callback) != "function") return ;
   uid = client.uin
@@ -103,6 +128,26 @@ function pull(client, type, target, time, callback) {
   }
 }
 
+/**
+ * 
+ * @param {oicq.client} client A QQ Client
+ * @param {"friend" | "group"} type Message Type.
+ * @param {String} target Message target.
+ * @param {String | MessageElem} message Message Content.
+ */
+function send(client, type, target, message, callback) {
+  if (typeof(callback) != "function") return;
+  if (type == "friend") {
+    friend = client.pickFriend(target)
+    callback(friend.sendMsg(message))
+  }
+  if (type == "group") {
+    group = client.pickGroup(target)
+    callback(group.sendMsg(message))
+  }
+}
+
+exports.send = send;
 exports.receive = receive;
 exports.get = get;
 exports.pull = pull;

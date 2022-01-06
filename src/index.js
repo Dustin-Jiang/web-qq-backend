@@ -1,7 +1,6 @@
 const express = require("express")
 const app = express()
 const { createClientItem } = require("./client")
-const message = require("./message")
 
 const account = [3599579486]
 var accountList = {}
@@ -21,6 +20,16 @@ app.get("/login/qrcode/:id", (req, res) => {
     res.status(404).send("User Not Found")
   } else {
     client.scanCode(req, res)
+  }
+})
+
+app.get("/login/request/:id", (req, res) => {
+  client = accountList[req.params.id]
+  if (client == undefined) {
+    res.status(404).send("User Not Found")
+  } else {
+    client.login()
+    res.status(200).send("Please scan code.")
   }
 })
 
@@ -48,7 +57,7 @@ app.get("/chat/:id/:type/:target/:date", (req, res) => {
   if (client == undefined) {
     res.status(404).send("User Not Found");
   } else {
-    message.get(client.uid, req.params.type, req.params.target, req.params.date, (result) => res.send(result))
+    client.get(client.uid, req.params.type, req.params.target, req.params.date, (result) => res.send(result))
   }
 })
 
@@ -57,7 +66,16 @@ app.get("/history/pull/:id/:type/:target/:time", (req, res) => {
   if (client == undefined) {
     res.status(404).send("User Not Found")
   } else {
-    message.pull(client.client, req.params.type, req.params.target, req.params.time, (result) => res.send(result))
+    client.pull(client.client, req.params.type, req.params.target, req.params.time, (result) => res.send(result))
+  }
+})
+
+app.get("/send/text/:id/:type/:target/:content", (req, res) => {
+  client = accountList[req.params.id]
+  if (client == undefined) {
+    res.status(404).send("User Not Found")
+  } else {
+    client.send(client.client, req.params.type, req.params.target, req.params.content, (result) => res.send(result))
   }
 })
 
