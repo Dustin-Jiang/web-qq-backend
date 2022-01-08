@@ -20,7 +20,7 @@ class ClientItem {
     this.logging = false
   }
   login(){
-    this.client.on("system.login.qrcode", () => this.logging = true).login()
+    this.client.on("system.login.qrcode", () => {this.logging = true}).login()
   }
   /**
    * After user requests for login in, response the QR code pic.

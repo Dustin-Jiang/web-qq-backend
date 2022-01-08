@@ -2,7 +2,7 @@ const express = require("express")
 const app = express()
 const { createClientItem } = require("./client")
 
-const account = [3599579486]
+const account = [3599579486, 2752805684]
 var accountList = {}
 
 for (i of account) {
@@ -10,11 +10,15 @@ for (i of account) {
 }
 
 app.get("/", (req, res) => {
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', '*');
   res.send("OICQ Backend")
 })
 
 //扫码后等待请求登录
 app.get("/login/qrcode/:id", (req, res) => {
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', '*');
   client = accountList[req.params.id]
   if (client == undefined) {
     res.status(404).send("User Not Found")
@@ -24,16 +28,21 @@ app.get("/login/qrcode/:id", (req, res) => {
 })
 
 app.get("/login/request/:id", (req, res) => {
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', '*');
   client = accountList[req.params.id]
   if (client == undefined) {
     res.status(404).send("User Not Found")
   } else {
-    client.login()
-    res.status(200).send("Please scan code.")
+    client.login();
+    client.client.once("system.login.qrcode", () => res.status(403).send("Please scan code."))
+    client.client.once("system.online", () => res.status(200).send())
   }
 })
 
 app.get("/login/scan/:id", (req, res) => {
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', '*');
   client = accountList[req.params.id];
   if (client == undefined) {
     res.status(404).send("User Not Found");
@@ -43,6 +52,8 @@ app.get("/login/scan/:id", (req, res) => {
 })
 
 app.get("/user/:id/list/:type", (req, res) => {
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', '*');
   client = accountList[req.params.id].client;
   if (client == undefined) {
     res.status(404).send("User Not Found");
@@ -52,7 +63,20 @@ app.get("/user/:id/list/:type", (req, res) => {
   }
 })
 
+app.get("/client/nickname/:id", (req, res) => {
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  client = accountList[req.params.id].client;
+  if (client == undefined) {
+    res.status(404).send("User Not Found");
+  } else {
+    res.send(client.nickname)
+  }
+})
+
 app.get("/chat/:id/:type/:target/:date", (req, res) => {
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', '*');
   client = accountList[req.params.id];
   if (client == undefined) {
     res.status(404).send("User Not Found");
@@ -62,6 +86,8 @@ app.get("/chat/:id/:type/:target/:date", (req, res) => {
 })
 
 app.get("/history/pull/:id/:type/:target/:time", (req, res) => {
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', '*');
   client = accountList[req.params.id]
   if (client == undefined) {
     res.status(404).send("User Not Found")
@@ -71,6 +97,8 @@ app.get("/history/pull/:id/:type/:target/:time", (req, res) => {
 })
 
 app.get("/send/text/:id/:type/:target/:content", (req, res) => {
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', '*');
   client = accountList[req.params.id]
   if (client == undefined) {
     res.status(404).send("User Not Found")
