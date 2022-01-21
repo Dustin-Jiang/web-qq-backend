@@ -11,7 +11,11 @@ function receive(uid, message) {
   filepath = getHistoryFileUrl(uid, message.message_type, message, date)
   fs.readFile(filepath, "utf8", (err, data) => {
     if (err) {
-      createFolder(`src/data/${uid}/group/${message.group_id}`);
+      folderpath = filepath.split("/")
+      folderpath.pop()
+      folderpath.shift()
+      folderpath = folderpath.join("/")
+      createFolder(folderpath);
       if (err.code == "ENOENT") { logs = []; } else { throw err; }
     } else { logs = (data == "") ? [] : JSON.parse(data); }
     //插入消息
@@ -115,16 +119,33 @@ function get(uid, type, target, file, callback) {
 function pull(client, type, target, time, callback) {
   if (typeof(callback) != "function") return ;
   uid = client.uin
-  if (type == "friend") {
-    friend = client.pickFriend(target)
-    friend.getChatHistory(time).then(callback, (e) => console.log(e))
+  if (time == "latest") {
+    if (type == "friend") {
+      friend = client.pickFriend(target);
+      friend.getChatHistory().then((result) => {
+        callback(result)
+      }, (e) => console.log(e));
+    }
+    if (type == "group") {
+      group = client.pickGroup(target);
+      group.getChatHistory().then((result) => {
+        // for(i of result) { receive(uid, i) }
+        callback(result);
+      }, (e) => console.log(e));
+    }
   }
-  if (type == "group") {
-    group = client.pickGroup(target)
-    group.getChatHistory(time).then((result) => {
-      // for(i of result) { receive(uid, i) }
-      callback(result)
-    }, (e) => console.log(e))
+  else {
+    if (type == "friend") {
+      friend = client.pickFriend(target);
+      friend.getChatHistory(time).then(callback, (e) => console.log(e));
+    }
+    if (type == "group") {
+      group = client.pickGroup(target);
+      group.getChatHistory(time).then((result) => {
+        // for(i of result) { receive(uid, i) }
+        callback(result);
+      }, (e) => console.log(e));
+    }
   }
 }
 
