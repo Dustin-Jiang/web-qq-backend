@@ -158,11 +158,11 @@ function pull(client, type, target, time, callback) {
  */
 function send(client, type, target, message, callback) {
   if (typeof(callback) != "function") return;
-  if (type == "friend") {
+  if (type in ["friend", "Friend"]) {
     friend = client.pickFriend(target)
     callback(friend.sendMsg(message))
   }
-  if (type == "group") {
+  if (type in ["group", "Group"]) {
     group = client.pickGroup(target)
     callback(group.sendMsg(message))
   }
