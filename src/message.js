@@ -1,29 +1,35 @@
-const fs = require("fs");
+const cache = require("./cache");
+const fs = require("fs")
 
 /**
  * Write message to the history file when receive a new message. 
  * @param {Number} uid Client uid. 
- * @param {ociq.Message} message `oicq.Message` object contains the new message. 
+ * @param {ociq.Message} message `oicq.Message` object contains the new message.
+ * @param {Number} historyId When pulling history message, to get id.
  */
-function receive(uid, message) {
+function receive(uid, message, historyId) {
   d = new Date(message.time * 1000);
   date = getDate(d);
-  filepath = getHistoryFileUrl(uid, message.message_type, message, date)
-  fs.readFile(filepath, "utf8", (err, data) => {
+  filepath = getHistoryFileUrl(uid, 
+    message.message_type, 
+    (historyId == undefined) ? messageId(message) : historyId, //To check if `historyId` is set
+    date)
+  cache.readFile(filepath, "utf8", (err, data) => {
     if (err) {
+      //创建对应目录
       folderpath = filepath.split("/")
       folderpath.pop()
       folderpath.shift()
       folderpath = folderpath.join("/")
       createFolder(folderpath);
       if (err.code == "ENOENT") { logs = []; } else { throw err; }
-    } else { logs = (data == "") ? [] : JSON.parse(data); }
+    } else { logs = (data == "" || data == undefined) ? [] : JSON.parse(data); }
     //插入消息
     logs.push(filter(message));
     //按时间排序
     logs.sort(function (a, b) { return a.time - b.time; })
     //写入文件
-    fs.writeFile(filepath, JSON.stringify(logs, null, 2), { "encoding": "utf8", "flag": "w" }, (err) => {
+    cache.writeFile(filepath, JSON.stringify(logs, null, 2), { "encoding": "utf8", "flag": "w" }, (err) => {
       if (err) throw err;
       return;
     });
@@ -38,12 +44,21 @@ function getDate(d) {
   return d.getFullYear().toString() + month + date
 }
 
-function getHistoryFileUrl(uid, type, message, date) {
+function messageId(message) {
+  switch(message.message_type) {
+    case "private":
+      return message.user_id
+    case "group":
+      return message.group_id
+  }
+}
+
+function getHistoryFileUrl(uid, type, id, date) {
   switch(type) {
     case "private":
-      return `./src/data/${uid}/${type}/${message.user_id}/${date}.json`
+      return `./src/data/${uid}/${type}/${id}/${date}.json`
     case "group":
-      return `./src/data/${uid}/${type}/${message.group_id}/${date}.json`
+      return `./src/data/${uid}/${type}/${id}/${date}.json`
   }
 }
 
@@ -97,7 +112,7 @@ function get(uid, type, target, file, callback) {
       fileList = fileList.slice(0, fileList.indexOf(file))
     }
     file = fileList.pop()
-    fs.readFile(`./src/data/${uid}/${type}/${target}/${file}`, "utf8", (err, data) => {
+    cache.readFile(`./src/data/${uid}/${type}/${target}/${file}`, "utf8", (err, data) => {
       if (err) throw err;
       callback({
         "file": file,
@@ -119,17 +134,19 @@ function get(uid, type, target, file, callback) {
 function pull(client, type, target, time, callback) {
   if (typeof(callback) != "function") return ;
   uid = client.uin
+  // Shit Codes, there will be sometime to fix it.
   if (time == "latest") {
     if (type == "friend") {
       friend = client.pickFriend(target);
       friend.getChatHistory().then((result) => {
-        callback(result)
+        for (i of result) { receive(uid, i, target); }
+        callback(result);
       }, (e) => console.log(e));
     }
     if (type == "group") {
       group = client.pickGroup(target);
       group.getChatHistory().then((result) => {
-        // for(i of result) { receive(uid, i) }
+        for (i of result) { receive(uid, i, target); }
         callback(result);
       }, (e) => console.log(e));
     }
@@ -137,12 +154,14 @@ function pull(client, type, target, time, callback) {
   else {
     if (type == "friend") {
       friend = client.pickFriend(target);
-      friend.getChatHistory(time).then(callback, (e) => console.log(e));
+      friend.getChatHistory(time).then((result) => {
+        for (i of result) { receive(uid, i, target); }
+      }, (e) => console.log(e));
     }
     if (type == "group") {
       group = client.pickGroup(target);
       group.getChatHistory(time).then((result) => {
-        // for(i of result) { receive(uid, i) }
+        for (i of result) { receive(uid, i, target); }
         callback(result);
       }, (e) => console.log(e));
     }

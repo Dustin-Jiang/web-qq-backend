@@ -92,7 +92,12 @@ app.get("/history/pull/:id/:type/:target/:time", (req, res) => {
   if (client == undefined) {
     res.status(404).send("User Not Found")
   } else {
-    client.pull(client.client, req.params.type, req.params.target, req.params.time, (result) => res.send(result))
+    client.pull(client.client, 
+      req.params.type, 
+      req.params.target, 
+      req.params.time, 
+      (result) => res.send(result)
+    )
   }
 })
 
