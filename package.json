@@ -7,8 +7,10 @@
   "author": "Dustin Jiang <dustinjiang@outlook.com>",
   "license": "GPL-3.0",
   "dependencies": {
+    "@types/express": "^4.17.13",
     "express": "^4.17.2",
-    "oicq": "^2.1.8"
+    "oicq": "^2.1.8",
+    "tsc": "^2.0.4"
   },
   "scripts": {
     "start": "node ./src/index.js"

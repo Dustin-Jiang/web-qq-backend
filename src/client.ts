@@ -2,6 +2,7 @@ exports.ClientItem = void 0
 const { createClient } = require("oicq")
 const fs = require("fs")
 const message = require("./message")
+import { Client } from "oicq"
 
 class ClientItem {
   /**
@@ -9,6 +10,11 @@ class ClientItem {
    * @param {Number} uid User QQ ID
    * @returns {ClientItem}
    */
+  token: String
+  uid: Number
+  client: Client
+  logging: Boolean
+
   constructor(uid) {
     this.token = "This is a token"
     this.uid = uid

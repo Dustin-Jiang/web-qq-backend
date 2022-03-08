@@ -5,7 +5,7 @@ const { createClientItem } = require("./client")
 const account = [3599579486, 2752805684]
 var accountList = {}
 
-for (i of account) {
+for (let i of account) {
   accountList[i.toString()] = createClientItem(i)
 }
 
@@ -19,7 +19,7 @@ app.get("/", (req, res) => {
 app.get("/login/qrcode/:id", (req, res) => {
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
-  client = accountList[req.params.id]
+  let client = accountList[req.params.id]
   if (client == undefined) {
     res.status(404).send("User Not Found")
   } else {
@@ -30,7 +30,7 @@ app.get("/login/qrcode/:id", (req, res) => {
 app.get("/login/request/:id", (req, res) => {
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
-  client = accountList[req.params.id]
+  let client = accountList[req.params.id]
   if (client == undefined) {
     res.status(404).send("User Not Found")
   } else {
@@ -43,7 +43,7 @@ app.get("/login/request/:id", (req, res) => {
 app.get("/login/scan/:id", (req, res) => {
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
-  client = accountList[req.params.id];
+  let client = accountList[req.params.id];
   if (client == undefined) {
     res.status(404).send("User Not Found");
   } else {
@@ -54,7 +54,7 @@ app.get("/login/scan/:id", (req, res) => {
 app.get("/user/:id/list/:type", (req, res) => {
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
-  client = accountList[req.params.id].client;
+  let client = accountList[req.params.id].client;
   if (client == undefined) {
     res.status(404).send("User Not Found");
   } else {
@@ -66,7 +66,7 @@ app.get("/user/:id/list/:type", (req, res) => {
 app.get("/client/nickname/:id", (req, res) => {
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
-  client = accountList[req.params.id].client;
+  let client = accountList[req.params.id].client;
   if (client == undefined) {
     res.status(404).send("User Not Found");
   } else {
@@ -77,7 +77,7 @@ app.get("/client/nickname/:id", (req, res) => {
 app.get("/chat/:id/:type/:target/:date", (req, res) => {
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
-  client = accountList[req.params.id];
+  let client = accountList[req.params.id];
   if (client == undefined) {
     res.status(404).send("User Not Found");
   } else {
@@ -88,7 +88,7 @@ app.get("/chat/:id/:type/:target/:date", (req, res) => {
 app.get("/history/pull/:id/:type/:target/:time", (req, res) => {
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
-  client = accountList[req.params.id]
+  let client = accountList[req.params.id]
   if (client == undefined) {
     res.status(404).send("User Not Found")
   } else {
@@ -99,7 +99,7 @@ app.get("/history/pull/:id/:type/:target/:time", (req, res) => {
 app.get("/send/text/:id/:type/:target/:content", (req, res) => {
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
-  client = accountList[req.params.id]
+  let client = accountList[req.params.id]
   if (client == undefined) {
     res.status(404).send("User Not Found")
   } else {

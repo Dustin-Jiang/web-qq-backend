@@ -1,3 +1,5 @@
+import { Client, GroupMessage, Message, PrivateMessage } from "oicq";
+
 const fs = require("fs");
 
 /**
@@ -6,10 +8,11 @@ const fs = require("fs");
  * @param {ociq.Message} message `oicq.Message` object contains the new message. 
  */
 function receive(uid, message) {
-  d = new Date(message.time * 1000);
-  date = getDate(d);
-  filepath = getHistoryFileUrl(uid, message.message_type, message, date)
+  let d = new Date(message.time * 1000);
+  let date = getDate(d);
+  let filepath = getHistoryFileUrl(uid, message, date)
   fs.readFile(filepath, "utf8", (err, data) => {
+    let logs
     if (err) {
       createFolder(`src/data/${uid}/group/${message.group_id}`);
       if (err.code == "ENOENT") { logs = []; } else { throw err; }
@@ -26,26 +29,28 @@ function receive(uid, message) {
   });
 }
 
-function getDate(d) {
-  month = (d.getMonth() + 1).toString()
+function getDate(d : Date) : String {
+  let month = (d.getMonth() + 1).toString()
   if (month.length == 1) month = "0" + month
-  date = d.getDate().toString();
+  let date = d.getDate().toString();
   if (date.length == 1) date = "0" + date
   return d.getFullYear().toString() + month + date
 }
 
-function getHistoryFileUrl(uid, type, message, date) {
-  switch(type) {
-    case "private":
-      return `./src/data/${uid}/${type}/${message.user_id}/${date}.json`
-    case "group":
-      return `./src/data/${uid}/${type}/${message.group_id}/${date}.json`
-  }
+function getHistoryFileUrl(
+  uid: String | Number,
+  message: GroupMessage | PrivateMessage,
+  date: String
+): String {
+  if (message instanceof PrivateMessage)
+    return `./src/data/${uid}/private/${message.user_id}/${date}.json`
+  else if (message instanceof GroupMessage)
+    return `./src/data/${uid}/group/${message.group_id}/${date}.json`
 }
 
-function createFolder(path) {
+function createFolder(path : String) {
   var pwd = ".";
-  for (i of path.split("/")) {
+  for (let i of path.split("/")) {
     try {
       fs.mkdirSync(pwd + "/" + i);
       pwd += "/" + i;
@@ -57,8 +62,8 @@ function createFolder(path) {
   }
 }
 
-function filter(obj) {
-  deleteList = [
+function filter(obj : Object) : Object {
+  let deleteList = [
     "font",
     "rand",
     "auto_reply",
@@ -68,7 +73,7 @@ function filter(obj) {
     "to_id",
     "from_id"
   ];
-  for (i of deleteList) {
+  for (let i of deleteList) {
     delete obj[i];
   }
   return obj;
@@ -85,7 +90,7 @@ function filter(obj) {
  */
 function get(uid, type, target, file, callback) {
   if (typeof(callback) != "function") return;
-  fileList = []
+  let fileList = []
   fs.readdir(`./src/data/${uid}/${type}/${target}`, (err, data) => {
     if (err) return fileList;
     fileList = data;
@@ -105,22 +110,22 @@ function get(uid, type, target, file, callback) {
 
 /**
  * Pull history from Tencent.
- * @param {oicq.client} client An object of `oicq.client`. 
+ * @param {oicq.Client} client An object of `oicq.Client`. 
  * @param {"friend" | "group"} type 
  * @param {String} target 
  * @param {String} time 
  * @param {Function} callback 
  * @returns 
  */
-function pull(client, type, target, time, callback) {
+function pull(client : Client, type, target, time, callback) {
   if (typeof(callback) != "function") return ;
-  uid = client.uin
+  let uid = client.uin
   if (type == "friend") {
-    friend = client.pickFriend(target)
+    let friend = client.pickFriend(target)
     friend.getChatHistory(time).then(callback, (e) => console.log(e))
   }
   if (type == "group") {
-    group = client.pickGroup(target)
+    let group = client.pickGroup(target)
     group.getChatHistory(time).then((result) => {
       // for(i of result) { receive(uid, i) }
       callback(result)
@@ -138,11 +143,11 @@ function pull(client, type, target, time, callback) {
 function send(client, type, target, message, callback) {
   if (typeof(callback) != "function") return;
   if (type in ["friend", "Friend"]) {
-    friend = client.pickFriend(target)
+    let friend = client.pickFriend(target)
     callback(friend.sendMsg(message))
   }
   if (type in ["group", "Group"]) {
-    group = client.pickGroup(target)
+    let group = client.pickGroup(target)
     callback(group.sendMsg(message))
   }
 }
