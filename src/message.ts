@@ -10,12 +10,17 @@ import fs, { PathOrFileDescriptor } from "fs";
 function receive(uid : number, message : GroupMessage | PrivateMessage)  {
   let d = new Date(message.time * 1000);
   let date = getDate(d);
-  let filepath = getHistoryFileUrl(uid, message, date) as PathOrFileDescriptor
-  fs.readFile(filepath, "utf8", (err, data) => {
+  let filepath = getHistoryFileUrl(uid, message, date)
+  fs.readFile(filepath as PathOrFileDescriptor, "utf8", (err, data) => {
+    let folderpath : string[]
     let logs : object[]
     // TODO: 搞清楚这里创建文件夹逻辑 目前先解决TS类型
-    if (err && message instanceof GroupMessage) {
-      createFolder(`src/data/${uid}/group/${message.group_id}`);
+    if (err) {
+      folderpath = filepath.split("/")
+      folderpath.pop()
+      folderpath.shift()
+      let folder = folderpath.join("/")
+      createFolder(folder);
       if (err.code == "ENOENT") { logs = []; } else { throw err; }
     } else { logs = (data == "") ? [] : JSON.parse(data); }
     //插入消息
@@ -24,7 +29,7 @@ function receive(uid : number, message : GroupMessage | PrivateMessage)  {
     // `any` 指排序时前后项
     logs.sort(function (a : any , b : any) { return a.time - b.time; })
     //写入文件
-    fs.writeFile(filepath, JSON.stringify(logs, null, 2), { "encoding": "utf8", "flag": "w" }, (err) => {
+    fs.writeFile(filepath as PathOrFileDescriptor, JSON.stringify(logs, null, 2), { "encoding": "utf8", "flag": "w" }, (err) => {
       if (err) throw err;
       return;
     });
@@ -138,19 +143,36 @@ function pull(
   type: "friend" | "group",
   target: string,
   time: string,
-  callback: any ) { //FIXME: The type of `callback` need to be fixed.
+  callback: any) { //FIXME: The type of `callback` need to be fixed.
   if (typeof (callback) != "function") return;
   let uid = client.uin
-  if (type == "friend") {
-    let friend = client.pickFriend(parseInt(target))
-    friend.getChatHistory(parseInt(time)).then(callback, (e) => console.log(e))
+  if (time == "latest") { // 获取最新消息
+    if (type == "friend") {
+      let friend = client.pickFriend(parseInt(target));
+      friend.getChatHistory().then((result) => {
+        callback(result)
+      }, (e) => console.log(e));
+    }
+    if (type == "group") {
+      let group = client.pickGroup(parseInt(target));
+      group.getChatHistory().then((result) => {
+        // for(i of result) { receive(uid, i) }
+        callback(result);
+      }, (e) => console.log(e));
+    }
   }
-  if (type == "group") {
-    let group = client.pickGroup(parseInt(target))
-    group.getChatHistory(parseInt(time)).then((result) => {
-      // for(i of result) { receive(uid, i) }
-      callback(result.toString())
-    }, (e) => console.log(e))
+  else {
+    if (type == "friend") {
+      let friend = client.pickFriend(parseInt(target))
+      friend.getChatHistory(parseInt(time)).then(callback, (e) => console.log(e))
+    }
+    if (type == "group") {
+      let group = client.pickGroup(parseInt(target))
+      group.getChatHistory(parseInt(time)).then((result) => {
+        // for(i of result) { receive(uid, i) }
+        callback(result.toString())
+      }, (e) => console.log(e))
+    }
   }
 }
 
