@@ -1,26 +1,28 @@
-import { Client, GroupMessage, Message, PrivateMessage } from "oicq";
+import { Client, GroupMessage, MessageElem, PrivateMessage } from "oicq";
 
-const fs = require("fs");
+import fs, { PathOrFileDescriptor } from "fs";
 
 /**
  * Write message to the history file when receive a new message. 
  * @param {Number} uid Client uid. 
  * @param {ociq.Message} message `oicq.Message` object contains the new message. 
  */
-function receive(uid, message) {
+function receive(uid : number, message : GroupMessage | PrivateMessage)  {
   let d = new Date(message.time * 1000);
   let date = getDate(d);
-  let filepath = getHistoryFileUrl(uid, message, date)
+  let filepath = getHistoryFileUrl(uid, message, date) as PathOrFileDescriptor
   fs.readFile(filepath, "utf8", (err, data) => {
-    let logs
-    if (err) {
+    let logs : object[]
+    // TODO: 搞清楚这里创建文件夹逻辑 目前先解决TS类型
+    if (err && message instanceof GroupMessage) {
       createFolder(`src/data/${uid}/group/${message.group_id}`);
       if (err.code == "ENOENT") { logs = []; } else { throw err; }
     } else { logs = (data == "") ? [] : JSON.parse(data); }
     //插入消息
     logs.push(filter(message));
-    //按时间排序
-    logs.sort(function (a, b) { return a.time - b.time; })
+    // 按时间排序
+    // `any` 指排序时前后项
+    logs.sort(function (a : any , b : any) { return a.time - b.time; })
     //写入文件
     fs.writeFile(filepath, JSON.stringify(logs, null, 2), { "encoding": "utf8", "flag": "w" }, (err) => {
       if (err) throw err;
@@ -42,10 +44,12 @@ function getHistoryFileUrl(
   message: GroupMessage | PrivateMessage,
   date: String
 ): String {
+  let result = ""
   if (message instanceof PrivateMessage)
-    return `./src/data/${uid}/private/${message.user_id}/${date}.json`
+    result = `./src/data/${uid}/private/${message.user_id}/${date}.json`
   else if (message instanceof GroupMessage)
-    return `./src/data/${uid}/group/${message.group_id}/${date}.json`
+    result = `./src/data/${uid}/group/${message.group_id}/${date}.json`
+  return result
 }
 
 function createFolder(path : String) {
@@ -62,7 +66,11 @@ function createFolder(path : String) {
   }
 }
 
-function filter(obj : Object) : Object {
+function filter(obj : PrivateMessage | GroupMessage) : object {
+  // To fix index problem in TypeScript
+  let a = obj as {
+    [index: string]: any
+  }
   let deleteList = [
     "font",
     "rand",
@@ -74,7 +82,7 @@ function filter(obj : Object) : Object {
     "from_id"
   ];
   for (let i of deleteList) {
-    delete obj[i];
+    delete a[i];
   }
   return obj;
 }
@@ -88,16 +96,24 @@ function filter(obj : Object) : Object {
  * @param {Function} callback Callback
  * @returns 
  */
-function get(uid, type, target, file, callback) {
-  if (typeof(callback) != "function") return;
-  let fileList = []
+function get(
+  uid : number,
+  type : "group" | "private",
+  target : string,
+  file : string,
+  callback : Function
+  ) {
+  let fileList : string[]
   fs.readdir(`./src/data/${uid}/${type}/${target}`, (err, data) => {
+    // 获取目标账号下目录
     if (err) return fileList;
     fileList = data;
     if (file != undefined && file != "-1") {
       fileList = fileList.slice(0, fileList.indexOf(file))
     }
-    file = fileList.pop()
+    // Type Safety
+    // Make sure the type of `file` is string.
+    file = (fileList[fileList.length - 1] === undefined) ? "" : fileList.pop() as string
     fs.readFile(`./src/data/${uid}/${type}/${target}/${file}`, "utf8", (err, data) => {
       if (err) throw err;
       callback({
@@ -117,18 +133,23 @@ function get(uid, type, target, file, callback) {
  * @param {Function} callback 
  * @returns 
  */
-function pull(client : Client, type, target, time, callback) {
-  if (typeof(callback) != "function") return ;
+function pull(
+  client: Client,
+  type: "friend" | "group",
+  target: string,
+  time: string,
+  callback: any ) { //FIXME: The type of `callback` need to be fixed.
+  if (typeof (callback) != "function") return;
   let uid = client.uin
   if (type == "friend") {
-    let friend = client.pickFriend(target)
-    friend.getChatHistory(time).then(callback, (e) => console.log(e))
+    let friend = client.pickFriend(parseInt(target))
+    friend.getChatHistory(parseInt(time)).then(callback, (e) => console.log(e))
   }
   if (type == "group") {
-    let group = client.pickGroup(target)
-    group.getChatHistory(time).then((result) => {
+    let group = client.pickGroup(parseInt(target))
+    group.getChatHistory(parseInt(time)).then((result) => {
       // for(i of result) { receive(uid, i) }
-      callback(result)
+      callback(result.toString())
     }, (e) => console.log(e))
   }
 }
@@ -140,14 +161,19 @@ function pull(client : Client, type, target, time, callback) {
  * @param {String} target Message target.
  * @param {String | MessageElem} message Message Content.
  */
-function send(client, type, target, message, callback) {
+function send(
+  client : Client, 
+  type : "friend" | "group", 
+  target : string, 
+  message : string | MessageElem, 
+  callback : any) { // FIXME: Type need to be fixed
   if (typeof(callback) != "function") return;
   if (type in ["friend", "Friend"]) {
-    let friend = client.pickFriend(target)
+    let friend = client.pickFriend(parseInt(target))
     callback(friend.sendMsg(message))
   }
   if (type in ["group", "Group"]) {
-    let group = client.pickGroup(target)
+    let group = client.pickGroup(parseInt(target))
     callback(group.sendMsg(message))
   }
 }

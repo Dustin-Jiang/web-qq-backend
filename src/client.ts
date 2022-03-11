@@ -1,10 +1,11 @@
 exports.ClientItem = void 0
-const { createClient } = require("oicq")
-const fs = require("fs")
-const message = require("./message")
+import { createClient } from "oicq"
+import fs from "fs"
+const { message } = require("./message")
+import { Request, Response } from "express"
 import { Client } from "oicq"
 
-class ClientItem {
+export default class ClientItem {
   /**
    * Create a user client via `oicq.createClient()`.
    * @param {Number} uid User QQ ID
@@ -15,7 +16,7 @@ class ClientItem {
   client: Client
   logging: Boolean
 
-  constructor(uid) {
+  constructor(uid : number) {
     this.token = "This is a token"
     this.uid = uid
 
@@ -34,7 +35,7 @@ class ClientItem {
    * @param {Express} res Response
    * @returns Respond the request or return if error
    */
-  scanCode(req, res) {
+  scanCode(req : Request, res : Response) {
     if(this.logging == false) return;
     const rs = fs.createReadStream(`./src/data/${req.params.id}/qrcode.png`);
     rs.pipe(res);
@@ -46,7 +47,7 @@ class ClientItem {
    * @param {Express} res Response
    * @returns Respond the request or return if error
    */
-  scanned(req, res) {
+  scanned(req : Request, res : Response) {
     if (this.logging == false) return;
     this.client.login();
     this.client.on("internal.error.qrcode", (retcode, message) => {
@@ -60,9 +61,10 @@ class ClientItem {
   receive = message.receive
   send = message.send
   pull = message.pull
+  get = message.get
 }
 
-function createClientItem(uid) {
+function createClientItem(uid : Number) {
   if (isNaN(Number(uid)))
     throw new Error(uid + " is not an OICQ account");
   return new ClientItem(Number(uid));
