@@ -7,7 +7,7 @@ import fs, { PathOrFileDescriptor } from "fs";
  * @param {Number} uid Client uid. 
  * @param {ociq.Message} message `oicq.Message` object contains the new message. 
  */
-function receive(uid : number, message : GroupMessage | PrivateMessage)  {
+export function receive(uid : number, message : GroupMessage | PrivateMessage)  {
   let d = new Date(message.time * 1000);
   let date = getDate(d);
   let filepath = getHistoryFileUrl(uid, message, date)
@@ -51,9 +51,9 @@ function getHistoryFileUrl(
 ): String {
   let result = ""
   if (message instanceof PrivateMessage)
-    result = `./src/data/${uid}/private/${message.user_id}/${date}.json`
+    result = `./dist/data/${uid}/private/${message.user_id}/${date}.json`
   else if (message instanceof GroupMessage)
-    result = `./src/data/${uid}/group/${message.group_id}/${date}.json`
+    result = `./dist/data/${uid}/group/${message.group_id}/${date}.json`
   return result
 }
 
@@ -101,7 +101,7 @@ function filter(obj : PrivateMessage | GroupMessage) : object {
  * @param {Function} callback Callback
  * @returns 
  */
-function get(
+export function get(
   uid : number,
   type : "group" | "private",
   target : string,
@@ -109,7 +109,7 @@ function get(
   callback : Function
   ) {
   let fileList : string[]
-  fs.readdir(`./src/data/${uid}/${type}/${target}`, (err, data) => {
+  fs.readdir(`./dist/data/${uid}/${type}/${target}`, (err, data) => {
     // 获取目标账号下目录
     if (err) return fileList;
     fileList = data;
@@ -119,7 +119,7 @@ function get(
     // Type Safety
     // Make sure the type of `file` is string.
     file = (fileList[fileList.length - 1] === undefined) ? "" : fileList.pop() as string
-    fs.readFile(`./src/data/${uid}/${type}/${target}/${file}`, "utf8", (err, data) => {
+    fs.readFile(`./dist/data/${uid}/${type}/${target}/${file}`, "utf8", (err, data) => {
       if (err) throw err;
       callback({
         "file": file,
@@ -138,7 +138,7 @@ function get(
  * @param {Function} callback 
  * @returns 
  */
-function pull(
+export function pull(
   client: Client,
   type: "friend" | "group",
   target: string,
@@ -183,7 +183,7 @@ function pull(
  * @param {String} target Message target.
  * @param {String | MessageElem} message Message Content.
  */
-function send(
+export function send(
   client : Client, 
   type : "friend" | "group", 
   target : string, 
@@ -199,8 +199,3 @@ function send(
     callback(group.sendMsg(message))
   }
 }
-
-exports.send = send;
-exports.receive = receive;
-exports.get = get;
-exports.pull = pull;
