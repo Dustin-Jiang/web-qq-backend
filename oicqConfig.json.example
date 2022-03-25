@@ -1,0 +1,11 @@
+{
+  "env": "",                         // "dev" for development environment, "production" for production environment.
+  "port": {                          // port for production and development environment.
+    "dev": 5000,
+    "production": 80
+  },
+  "loginRestriction": "true",        // "true" for a limited login list, "false" for allowing any user to login in.
+  "loginList": [                     // a list of Tencent QQ number.
+    // QQ numbers here.
+  ]
+}
