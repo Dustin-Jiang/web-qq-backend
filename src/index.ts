@@ -27,6 +27,9 @@ app.get("/", (req : Request, res : Response) => {
 
 //扫码后等待请求登录
 app.get("/login/qrcode/:id", (req : Request, res : Response) => {
+  // 避免缓存
+  res.setHeader("Cache-Control", "no-cache")
+  res.setHeader("Expires", "5")
   let client = accountList[req.params.id]
   if (client == undefined) {
     res.status(404).send("User Not Found")
@@ -41,8 +44,8 @@ app.get("/login/request/:id", (req : Request, res : Response) => {
     res.status(404).send("User Not Found")
   } else {
     client.login();
-    client.client.once("system.login.qrcode", () => res.status(403).send("Please scan code."))
-    client.client.once("system.online", () => res.status(200).send())
+    if (client.client.isOnline()) res.status(200).send()
+    else res.status(403).send("Please scan code.");
   }
 })
 
@@ -97,26 +100,26 @@ app.get("/user/:id/contact", (req: Request, res : Response) => {
       }
       return result
     }
-    for (let i of listFl()) {
-      if (typeof i === "number") continue
-      result.push(client.pull(
-        client.client,
-        "friend",
-        i.user_id.toString(),
-        "latest",
-        (mes : PrivateMessage[]) => {result.push(mes)}
-      ))
-    }
-    for (let i of listGl()) {
-      if (typeof i === "number") continue
-      result.push(client.pull(
-        client.client,
-        "group",
-        i.group_id.toString(),
-        "latest",
-        (mes : GroupMessage[]) => {result.push(mes)}
-      ))
-    }
+    // for (let i of listFl()) {
+    //   result.push(client.pull(
+    //     client.client,
+    //     "friend",
+    //     i.user_id.toString(),
+    //     "latest",
+    //     (mes : PrivateMessage[]) => {result.push(mes)}
+    //   ))
+    // }
+    // for (let i of listGl()) {
+    //   result.push(client.pull(
+    //     client.client,
+    //     "group",
+    //     i.group_id.toString(),
+    //     "latest",
+    //     (mes : GroupMessage[]) => {result.push(mes)}
+    //   ))
+    // }
+
+    result = [...listFl(), ...listGl()]
 
     res.send(result)
   }

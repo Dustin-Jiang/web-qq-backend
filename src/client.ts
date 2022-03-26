@@ -37,7 +37,6 @@ export default class ClientItem {
    */
   scanCode(req : Request, res : Response) {
     if(!this.isNowLogging) return;
-    this.client.login()   // 刷新QR
     const rs = fs.createReadStream(`./dist/data/${req.params.id}/qrcode.png`);
     rs.pipe(res);
     rs.on("error", () => res.status(404).send("User Not Found"));
@@ -50,13 +49,15 @@ export default class ClientItem {
    */
   scanned(req : Request, res : Response) {
     if (this.isNowLogging == false) return;
-    this.client.login();
-    this.client.on("internal.error.qrcode", (retcode, message) => {
+    this.client.login()
+    this.client.once("internal.error.qrcode", (retcode, message) => {
       res.status(500).send(message);
+      return
     });
-    this.client.on("system.online", () => {
+    this.client.once("system.online", () => {
       res.status(200).send()
       this.isNowLogging = false
+      return
     });
   }
   receive = message.receive
