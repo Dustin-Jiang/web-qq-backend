@@ -119,7 +119,7 @@ app.get("/user/:id/contact", (req: Request, res : Response) => {
     //   ))
     // }
 
-    result = [...listFl(), ...listGl()]
+    result = [...listFl(), ...listGl()];
 
     res.send(result)
   }
